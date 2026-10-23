@@ -131,20 +131,94 @@ public class Totito {
         return true;
     }
 
-    private int[] movimientoComputadora() {
-        // Primero gana si puede; luego bloquea una victoria inmediata del jugador.
-        int[] mov = buscarJugada("O");
-        if (mov != null) return mov;
-        mov = buscarJugada("X");
-        if (mov != null) return mov;
-        if (tablero[1][1].isEmpty()) return new int[]{1, 1};
-        java.util.List<int[]> esquinas = new ArrayList<>();
-        for (int[] p : new int[][]{{0,0},{0,2},{2,0},{2,2}}) if (tablero[p[0]][p[1]].isEmpty()) esquinas.add(p);
-        if (!esquinas.isEmpty()) return esquinas.get(azar.nextInt(esquinas.size()));
-        java.util.List<int[]> libres = new ArrayList<>();
-        for (int f = 0; f < 3; f++) for (int c = 0; c < 3; c++) if (tablero[f][c].isEmpty()) libres.add(new int[]{f,c});
-        return libres.isEmpty() ? null : libres.get(azar.nextInt(libres.size()));
+    
+private int[] movimientoComputadora() {
+
+    int mejorPuntaje = Integer.MIN_VALUE;
+    int[] mejorMovimiento = null;
+
+    for (int f = 0; f < 3; f++) {
+        for (int c = 0; c < 3; c++) {
+
+            if (tablero[f][c].isEmpty()) {
+
+                tablero[f][c] = "O";
+
+                int puntaje = minimax(false, 0);
+
+                tablero[f][c] = "";
+
+                if (puntaje > mejorPuntaje) {
+                    mejorPuntaje = puntaje;
+                    mejorMovimiento = new int[]{f, c};
+                }
+            }
+        }
     }
+
+    return mejorMovimiento;
+}
+
+
+private int minimax(boolean esMaximizador, int profundidad) {
+
+    if (gano("O")) {
+        return 10 - profundidad;
+    }
+
+    if (gano("X")) {
+        return profundidad - 10;
+    }
+
+    if (lleno()) {
+        return 0;
+    }
+
+    if (esMaximizador) {
+
+        int mejorPuntaje = Integer.MIN_VALUE;
+
+        for (int f = 0; f < 3; f++) {
+            for (int c = 0; c < 3; c++) {
+
+                if (tablero[f][c].isEmpty()) {
+
+                    tablero[f][c] = "O";
+
+                    int puntaje = minimax(false, profundidad + 1);
+
+                    tablero[f][c] = "";
+
+                    mejorPuntaje = Math.max(mejorPuntaje, puntaje);
+                }
+            }
+        }
+
+        return mejorPuntaje;
+
+    } else {
+
+        int mejorPuntaje = Integer.MAX_VALUE;
+
+        for (int f = 0; f < 3; f++) {
+            for (int c = 0; c < 3; c++) {
+
+                if (tablero[f][c].isEmpty()) {
+
+                    tablero[f][c] = "X";
+
+                    int puntaje = minimax(true, profundidad + 1);
+
+                    tablero[f][c] = "";
+
+                    mejorPuntaje = Math.min(mejorPuntaje, puntaje);
+                }
+            }
+        }
+
+        return mejorPuntaje;
+    }
+}
 
     private int[] buscarJugada(String ficha) {
         for (int f = 0; f < 3; f++) for (int c = 0; c < 3; c++) {
