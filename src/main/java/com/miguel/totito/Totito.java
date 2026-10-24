@@ -1,3 +1,4 @@
+
 package com.miguel.totito;
 
 import java.awt.*;
@@ -11,287 +12,577 @@ import javax.swing.*;
 
 /** Totito: jugador (X) contra computadora (O). */
 public class Totito {
-    // Se mantiene la idea original: matriz 3x3 con botones Swing.
     private final String[][] tablero = new String[3][3];
     private final JButton[][] botones = new JButton[3][3];
-    private final JFrame ventana = new JFrame("Totito - Contra la computadora");
-    private final JLabel estado = new JLabel("Tu turno: X", SwingConstants.CENTER);
-    private final JLabel marcador = new JLabel("", SwingConstants.CENTER);
+    private final JFrame ventana =
+            new JFrame("Totito - ¡Desafía a la computadora!");
+    private final JLabel estado =
+            new JLabel("¡Tu turno! Coloca una X", SwingConstants.CENTER);
+    private final JLabel marcador =
+            new JLabel("", SwingConstants.CENTER);
     private final java.util.List<String> historial = new ArrayList<>();
     private final Random azar = new Random();
-    private final Path archivo = Paths.get(System.getProperty("user.home"), ".totito-jdk25-historial.txt");
+    private final Path archivo = Paths.get(
+            System.getProperty("user.home"),
+            ".totito-jdk25-historial.txt");
+
+    // Nueva paleta de colores: morado, turquesa y rosa
+    private final Color fondo = new Color(31, 24, 55);
+    private final Color panel = new Color(48, 38, 78);
+    private final Color casilla = new Color(66, 53, 104);
+    private final Color azulX = new Color(76, 224, 218);
+    private final Color rojoO = new Color(255, 117, 171);
+    private final Color verde = new Color(139, 255, 180);
+    private final Color texto = new Color(255, 250, 255);
+    private final Color textoSuave = new Color(211, 199, 237);
+
     private int victorias, derrotas, empates;
     private boolean terminado, pensando;
     private int numeroPartida = 1;
 
     public Totito() {
         cargarHistorial();
-        ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        ventana.setSize(510, 630);
-        ventana.setMinimumSize(new Dimension(410, 510));
-        ventana.setLocationRelativeTo(null);
-        ventana.setLayout(new BorderLayout(10, 10));
-        ventana.getContentPane().setBackground(new Color(240, 245, 252));
 
-        JPanel arriba = new JPanel(new GridLayout(4, 1, 0, 5));
-        arriba.setBackground(new Color(240, 245, 252));
-        JLabel titulo = new JLabel("TOTITO", SwingConstants.CENTER);
-        titulo.setFont(new Font("SansSerif", Font.BOLD, 31));
-        titulo.setForeground(new Color(30, 59, 100));
-        JLabel subtitulo = new JLabel("Tú eres X  •  La computadora es O", SwingConstants.CENTER);
+        ventana.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        ventana.setSize(540, 690);
+        ventana.setMinimumSize(new Dimension(430, 570));
+        ventana.setLocationRelativeTo(null);
+        ventana.getContentPane().setBackground(fondo);
+        ventana.setLayout(new BorderLayout(12, 12));
+
+        // Encabezado
+        JPanel arriba = new JPanel(new GridLayout(3, 1, 0, 7));
+        arriba.setBackground(fondo);
+        arriba.setBorder(BorderFactory.createEmptyBorder(
+                22, 20, 8, 20));
+
+        JLabel titulo = new JLabel(
+                " TOTITO ", SwingConstants.CENTER);
+        titulo.setFont(new Font("SansSerif", Font.BOLD, 38));
+        titulo.setForeground(new Color(255, 220, 110));
+
+        JLabel subtitulo = new JLabel(
+                "",
+                SwingConstants.CENTER);
+        subtitulo.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        subtitulo.setForeground(textoSuave);
+
         estado.setFont(new Font("SansSerif", Font.BOLD, 17));
-        marcador.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        estado.setForeground(azulX);
+
         arriba.add(titulo);
         arriba.add(subtitulo);
         arriba.add(estado);
-        arriba.add(marcador);
+
         ventana.add(arriba, BorderLayout.NORTH);
 
-        JPanel centro = new JPanel(new GridLayout(3, 3, 8, 8));
-        centro.setBackground(new Color(240, 245, 252));
-        centro.setBorder(BorderFactory.createEmptyBorder(10, 24, 10, 24));
+        // Panel central
+        JPanel centro = new JPanel(new BorderLayout(0, 12));
+        centro.setBackground(fondo);
+        centro.setBorder(BorderFactory.createEmptyBorder(
+                0, 24, 0, 24));
+
+        marcador.setFont(new Font("SansSerif", Font.BOLD, 15));
+        marcador.setForeground(texto);
+        marcador.setOpaque(true);
+        marcador.setBackground(panel);
+        marcador.setBorder(BorderFactory.createEmptyBorder(
+                12, 8, 12, 8));
+
+        centro.add(marcador, BorderLayout.NORTH);
+
+        // Tablero
+        JPanel tableroPanel =
+                new JPanel(new GridLayout(3, 3, 10, 10));
+        tableroPanel.setBackground(fondo);
+        tableroPanel.setBorder(BorderFactory.createEmptyBorder(
+                4, 0, 4, 0));
+
         for (int f = 0; f < 3; f++) {
             for (int c = 0; c < 3; c++) {
                 tablero[f][c] = "";
+
                 JButton boton = new JButton("");
-                boton.setFont(new Font("SansSerif", Font.BOLD, 57));
-                boton.setBackground(Color.WHITE);
+                boton.setFont(new Font("SansSerif", Font.BOLD, 58));
+                boton.setForeground(texto);
+                boton.setBackground(casilla);
                 boton.setFocusPainted(false);
-                final int fila = f, columna = c;
-                boton.addActionListener(e -> jugar(fila, columna));
+                boton.setBorder(BorderFactory.createLineBorder(
+                        new Color(142, 116, 195), 2, true));
+                boton.setCursor(Cursor.getPredefinedCursor(
+                        Cursor.HAND_CURSOR));
+                boton.setOpaque(true);
+                boton.setContentAreaFilled(true);
+
+                final int fila = f;
+                final int columna = c;
+
+                boton.addActionListener(
+                        e -> jugar(fila, columna));
+
+                // Efecto de color al pasar el cursor
+                boton.addMouseListener(new java.awt.event.MouseAdapter() {
+                    @Override
+                    public void mouseEntered(
+                            java.awt.event.MouseEvent e) {
+                        if (!terminado && !pensando
+                                && tablero[fila][columna].isEmpty()) {
+                            boton.setBackground(
+                                    new Color(94, 72, 143));
+                        }
+                    }
+
+                    @Override
+                    public void mouseExited(
+                            java.awt.event.MouseEvent e) {
+                        if (tablero[fila][columna].isEmpty()) {
+                            boton.setBackground(casilla);
+                        }
+                    }
+                });
+
                 botones[f][c] = boton;
-                centro.add(boton);
+                tableroPanel.add(boton);
             }
         }
+
+        JPanel tableroContenedor =
+                new JPanel(new BorderLayout());
+        tableroContenedor.setBackground(panel);
+        tableroContenedor.setBorder(
+                BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(
+                                new Color(142, 116, 195), 2, true),
+                        BorderFactory.createEmptyBorder(
+                                12, 12, 12, 12)));
+
+        tableroContenedor.add(
+                tableroPanel, BorderLayout.CENTER);
+        centro.add(tableroContenedor, BorderLayout.CENTER);
+
         ventana.add(centro, BorderLayout.CENTER);
 
-        JPanel abajo = new JPanel(new GridLayout(2, 2, 8, 8));
-        abajo.setBackground(new Color(240, 245, 252));
-        abajo.setBorder(BorderFactory.createEmptyBorder(5, 24, 20, 24));
-        JButton nueva = new JButton("Nueva partida");
-        JButton ver = new JButton("Ver historial");
-        JButton borrar = new JButton("Borrar historial");
-        JButton ayuda = new JButton("Cómo jugar");
+        // Botones inferiores
+        JPanel abajo = new JPanel(new GridLayout(2, 2, 10, 10));
+        abajo.setBackground(fondo);
+        abajo.setBorder(BorderFactory.createEmptyBorder(
+                8, 24, 22, 24));
+
+        JButton nueva = crearBoton(
+                "🔄 Nueva partida", new Color(0, 139, 130));
+        JButton ver = crearBoton(
+                "📜 Ver historial", new Color(100, 74, 180));
+        JButton borrar = crearBoton(
+                "🗑 Borrar historial", new Color(166, 62, 112));
+        JButton ayuda = crearBoton(
+                "❓ Cómo jugar", new Color(111, 75, 170));
+
         nueva.addActionListener(e -> nuevaPartida());
         ver.addActionListener(e -> mostrarHistorial());
+
         borrar.addActionListener(e -> {
-            int opcion = JOptionPane.showConfirmDialog(ventana, "¿Borrar el historial y reiniciar el marcador?", "Confirmar", JOptionPane.YES_NO_OPTION);
+            int opcion = JOptionPane.showConfirmDialog(
+                    ventana,
+                    "¿Borrar el historial y reiniciar el marcador?",
+                    "Confirmar",
+                    JOptionPane.YES_NO_OPTION);
+
             if (opcion == JOptionPane.YES_OPTION) {
-                historial.clear(); victorias = 0; derrotas = 0; empates = 0; numeroPartida = 1;
-                guardarHistorial(); actualizarMarcador(); nuevaPartida();
+                historial.clear();
+                victorias = 0;
+                derrotas = 0;
+                empates = 0;
+                numeroPartida = 1;
+
+                guardarHistorial();
+                actualizarMarcador();
+                nuevaPartida();
             }
         });
-        ayuda.addActionListener(e -> JOptionPane.showMessageDialog(ventana,
-                "Haz clic en una casilla para colocar X.\nLa computadora responde con O.\nGana quien forme 3 fichas en línea.\nEl historial guarda las partidas terminadas."));
-        abajo.add(nueva); abajo.add(ver); abajo.add(borrar); abajo.add(ayuda);
+
+        ayuda.addActionListener(e ->
+                JOptionPane.showMessageDialog(
+                        ventana,
+                        "🎮 CÓMO JUGAR 🎮\n\n"
+                        + "⭐ Tú juegas con X.\n"
+                        + "🤖 La computadora juega con O.\n"
+                        + "🏆 Forma tres fichas en línea para ganar.\n"
+                        + "🤝 Si se llena el tablero, hay empate.\n"
+                        + "📜 Tus resultados quedan guardados.",
+                        "Reglas del Totito",
+                        JOptionPane.INFORMATION_MESSAGE));
+
+        abajo.add(nueva);
+        abajo.add(ver);
+        abajo.add(borrar);
+        abajo.add(ayuda);
+
         ventana.add(abajo, BorderLayout.SOUTH);
+
         actualizarMarcador();
         ventana.setVisible(true);
     }
 
+    private JButton crearBoton(String textoBoton, Color color) {
+        JButton boton = new JButton(textoBoton);
+        boton.setFont(new Font("SansSerif", Font.BOLD, 13));
+        boton.setForeground(Color.WHITE);
+        boton.setBackground(color);
+        boton.setFocusPainted(false);
+        boton.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(
+                        color.brighter(), 1, true),
+                BorderFactory.createEmptyBorder(10, 5, 10, 5)));
+        boton.setCursor(Cursor.getPredefinedCursor(
+                Cursor.HAND_CURSOR));
+
+        boton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                boton.setBackground(color.brighter());
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                boton.setBackground(color);
+            }
+        });
+
+        return boton;
+    }
+
     private void jugar(int f, int c) {
-        if (terminado || pensando || !tablero[f][c].isEmpty()) return;
+        if (terminado || pensando
+                || !tablero[f][c].isEmpty()) {
+            return;
+        }
+
         colocar(f, c, "X");
-        if (evaluar("X")) return;
+
+        if (evaluar("X")) {
+            return;
+        }
+
         pensando = true;
-        estado.setText("La computadora está jugando...");
-        // Un pequeño retraso permite ver claramente la respuesta de la máquina.
+        estado.setText("🤖 La computadora está pensando...");
+
         TimerSwing.responder(400, () -> {
-            if (!pensando || terminado) return;
+            if (!pensando || terminado) {
+                return;
+            }
+
             int[] mov = movimientoComputadora();
-            if (mov != null) colocar(mov[0], mov[1], "O");
+
+            if (mov != null) {
+                colocar(mov[0], mov[1], "O");
+            }
+
             pensando = false;
-            if (!evaluar("O")) estado.setText("Tu turno: X");
+
+            if (!evaluar("O")) {
+                estado.setText("✨ ¡Tu turno! Coloca una X");
+            }
         });
     }
 
     private void colocar(int f, int c, String ficha) {
         tablero[f][c] = ficha;
         botones[f][c].setText(ficha);
-        botones[f][c].setForeground(ficha.equals("X") ? new Color(38, 100, 192) : new Color(210, 78, 82));
+        botones[f][c].setForeground(
+                ficha.equals("X") ? azulX : rojoO);
+        botones[f][c].setBackground(panel);
+        botones[f][c].setEnabled(false);
     }
 
     private boolean evaluar(String ficha) {
         String resultado = null;
+
         if (gano(ficha)) {
-            resultado = ficha.equals("X") ? "¡Ganaste!" : "Ganó la computadora";
-            if (ficha.equals("X")) victorias++; else derrotas++;
+            resultado = ficha.equals("X")
+                    ? "🎉 ¡Ganaste!"
+                    : "🤖 Ganó la computadora";
+
+            if (ficha.equals("X")) {
+                victorias++;
+            } else {
+                derrotas++;
+            }
         } else if (lleno()) {
-            resultado = "¡Empate!";
+            resultado = "🤝 ¡Empate!";
             empates++;
         }
-        if (resultado == null) return false;
+
+        if (resultado == null) {
+            return false;
+        }
+
         terminado = true;
         pensando = false;
         estado.setText(resultado);
-        historial.add("Partida " + numeroPartida++ + " | " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) + " | " + resultado);
+        estado.setForeground(
+                ficha.equals("X") ? verde : rojoO);
+
+        String resultadoHistorial = resultado
+                .replace("🎉 ", "")
+                .replace("🤖 ", "")
+                .replace("🤝 ", "");
+
+        historial.add(
+                "Partida " + numeroPartida++ + " | "
+                + LocalDateTime.now().format(
+                        DateTimeFormatter.ofPattern(
+                                "dd/MM/yyyy HH:mm"))
+                + " | " + resultadoHistorial);
+
         guardarHistorial();
         actualizarMarcador();
-        JOptionPane.showMessageDialog(ventana, resultado + "\nPresiona Nueva partida para volver a jugar.");
+
+        JOptionPane.showMessageDialog(
+                ventana,
+                resultado
+                + "\n\n¡Inténtalo otra vez con Nueva partida!",
+                "Fin de la partida",
+                JOptionPane.INFORMATION_MESSAGE);
+
         return true;
     }
 
-    
-private int[] movimientoComputadora() {
-
-    int mejorPuntaje = Integer.MIN_VALUE;
-    int[] mejorMovimiento = null;
-
-    for (int f = 0; f < 3; f++) {
-        for (int c = 0; c < 3; c++) {
-
-            if (tablero[f][c].isEmpty()) {
-
-                tablero[f][c] = "O";
-
-                int puntaje = minimax(false, 0);
-
-                tablero[f][c] = "";
-
-                if (puntaje > mejorPuntaje) {
-                    mejorPuntaje = puntaje;
-                    mejorMovimiento = new int[]{f, c};
-                }
-            }
-        }
-    }
-
-    return mejorMovimiento;
-}
-
-
-private int minimax(boolean esMaximizador, int profundidad) {
-
-    if (gano("O")) {
-        return 10 - profundidad;
-    }
-
-    if (gano("X")) {
-        return profundidad - 10;
-    }
-
-    if (lleno()) {
-        return 0;
-    }
-
-    if (esMaximizador) {
-
+    private int[] movimientoComputadora() {
         int mejorPuntaje = Integer.MIN_VALUE;
+        int[] mejorMovimiento = null;
 
         for (int f = 0; f < 3; f++) {
             for (int c = 0; c < 3; c++) {
-
                 if (tablero[f][c].isEmpty()) {
-
                     tablero[f][c] = "O";
 
-                    int puntaje = minimax(false, profundidad + 1);
+                    int puntaje = minimax(false, 0);
 
                     tablero[f][c] = "";
 
-                    mejorPuntaje = Math.max(mejorPuntaje, puntaje);
+                    if (puntaje > mejorPuntaje) {
+                        mejorPuntaje = puntaje;
+                        mejorMovimiento = new int[]{f, c};
+                    }
                 }
             }
         }
 
-        return mejorPuntaje;
-
-    } else {
-
-        int mejorPuntaje = Integer.MAX_VALUE;
-
-        for (int f = 0; f < 3; f++) {
-            for (int c = 0; c < 3; c++) {
-
-                if (tablero[f][c].isEmpty()) {
-
-                    tablero[f][c] = "X";
-
-                    int puntaje = minimax(true, profundidad + 1);
-
-                    tablero[f][c] = "";
-
-                    mejorPuntaje = Math.min(mejorPuntaje, puntaje);
-                }
-            }
-        }
-
-        return mejorPuntaje;
+        return mejorMovimiento;
     }
-}
+
+    private int minimax(boolean esMaximizador, int profundidad) {
+        if (gano("O")) {
+            return 10 - profundidad;
+        }
+
+        if (gano("X")) {
+            return profundidad - 10;
+        }
+
+        if (lleno()) {
+            return 0;
+        }
+
+        if (esMaximizador) {
+            int mejorPuntaje = Integer.MIN_VALUE;
+
+            for (int f = 0; f < 3; f++) {
+                for (int c = 0; c < 3; c++) {
+                    if (tablero[f][c].isEmpty()) {
+                        tablero[f][c] = "O";
+
+                        int puntaje =
+                                minimax(false, profundidad + 1);
+
+                        tablero[f][c] = "";
+
+                        mejorPuntaje = Math.max(
+                                mejorPuntaje, puntaje);
+                    }
+                }
+            }
+
+            return mejorPuntaje;
+        } else {
+            int mejorPuntaje = Integer.MAX_VALUE;
+
+            for (int f = 0; f < 3; f++) {
+                for (int c = 0; c < 3; c++) {
+                    if (tablero[f][c].isEmpty()) {
+                        tablero[f][c] = "X";
+
+                        int puntaje =
+                                minimax(true, profundidad + 1);
+
+                        tablero[f][c] = "";
+
+                        mejorPuntaje = Math.min(
+                                mejorPuntaje, puntaje);
+                    }
+                }
+            }
+
+            return mejorPuntaje;
+        }
+    }
 
     private int[] buscarJugada(String ficha) {
-        for (int f = 0; f < 3; f++) for (int c = 0; c < 3; c++) {
-            if (!tablero[f][c].isEmpty()) continue;
-            tablero[f][c] = ficha;
-            boolean gana = gano(ficha);
-            tablero[f][c] = "";
-            if (gana) return new int[]{f, c};
+        for (int f = 0; f < 3; f++) {
+            for (int c = 0; c < 3; c++) {
+                if (!tablero[f][c].isEmpty()) {
+                    continue;
+                }
+
+                tablero[f][c] = ficha;
+                boolean gana = gano(ficha);
+                tablero[f][c] = "";
+
+                if (gana) {
+                    return new int[]{f, c};
+                }
+            }
         }
+
         return null;
     }
 
     private boolean gano(String ficha) {
         for (int i = 0; i < 3; i++) {
-            if (tablero[i][0].equals(ficha) && tablero[i][1].equals(ficha) && tablero[i][2].equals(ficha)) return true;
-            if (tablero[0][i].equals(ficha) && tablero[1][i].equals(ficha) && tablero[2][i].equals(ficha)) return true;
+            if (tablero[i][0].equals(ficha)
+                    && tablero[i][1].equals(ficha)
+                    && tablero[i][2].equals(ficha)) {
+                return true;
+            }
+
+            if (tablero[0][i].equals(ficha)
+                    && tablero[1][i].equals(ficha)
+                    && tablero[2][i].equals(ficha)) {
+                return true;
+            }
         }
-        return (tablero[0][0].equals(ficha) && tablero[1][1].equals(ficha) && tablero[2][2].equals(ficha))
-            || (tablero[0][2].equals(ficha) && tablero[1][1].equals(ficha) && tablero[2][0].equals(ficha));
+
+        return (tablero[0][0].equals(ficha)
+                && tablero[1][1].equals(ficha)
+                && tablero[2][2].equals(ficha))
+                || (tablero[0][2].equals(ficha)
+                && tablero[1][1].equals(ficha)
+                && tablero[2][0].equals(ficha));
     }
 
     private boolean lleno() {
-        for (String[] fila : tablero) for (String celda : fila) if (celda.isEmpty()) return false;
+        for (String[] fila : tablero) {
+            for (String celda : fila) {
+                if (celda.isEmpty()) {
+                    return false;
+                }
+            }
+        }
+
         return true;
     }
 
     private void nuevaPartida() {
-        pensando = false; terminado = false;
-        estado.setText("Tu turno: X");
-        for (int f = 0; f < 3; f++) for (int c = 0; c < 3; c++) {
-            tablero[f][c] = "";
-            botones[f][c].setText("");
-            botones[f][c].setBackground(Color.WHITE);
+        pensando = false;
+        terminado = false;
+
+        estado.setText("✨ ¡Tu turno! Coloca una X");
+        estado.setForeground(azulX);
+
+        for (int f = 0; f < 3; f++) {
+            for (int c = 0; c < 3; c++) {
+                tablero[f][c] = "";
+                botones[f][c].setText("");
+                botones[f][c].setBackground(casilla);
+                botones[f][c].setForeground(texto);
+                botones[f][c].setEnabled(true);
+            }
         }
     }
 
     private void actualizarMarcador() {
-        marcador.setText("Ganadas: " + victorias + "    Perdidas: " + derrotas + "    Empates: " + empates);
+        marcador.setText(
+                "  🏆 Ganadas: " + victorias
+                + "     💻 Perdidas: " + derrotas
+                + "     🤝 Empates: " + empates + "  ");
     }
 
     private void mostrarHistorial() {
-        JTextArea area = new JTextArea(historial.isEmpty() ? "Todavía no hay partidas terminadas." : String.join("\n", historial));
-        area.setEditable(false); area.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        JTextArea area = new JTextArea(
+                historial.isEmpty()
+                ? "Todavía no hay partidas terminadas."
+                : String.join("\n", historial));
+
+        area.setEditable(false);
+        area.setFont(new Font("Monospaced", Font.PLAIN, 13));
+        area.setBackground(panel);
+        area.setForeground(texto);
+        area.setCaretPosition(0);
+
         JScrollPane scroll = new JScrollPane(area);
         scroll.setPreferredSize(new Dimension(440, 280));
-        JOptionPane.showMessageDialog(ventana, scroll, "Historial de partidas", JOptionPane.INFORMATION_MESSAGE);
+
+        JOptionPane.showMessageDialog(
+                ventana, scroll, "Historial de partidas",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void cargarHistorial() {
-        if (!Files.exists(archivo)) return;
+        if (!Files.exists(archivo)) {
+            return;
+        }
+
         try {
-            for (String linea : Files.readAllLines(archivo, StandardCharsets.UTF_8)) {
-                if (linea.isBlank()) continue;
+            for (String linea :
+                    Files.readAllLines(archivo, StandardCharsets.UTF_8)) {
+                if (linea.isBlank()) {
+                    continue;
+                }
+
                 historial.add(linea);
-                if (linea.endsWith("¡Ganaste!")) victorias++;
-                else if (linea.endsWith("Ganó la computadora")) derrotas++;
-                else if (linea.endsWith("¡Empate!")) empates++;
+
+                if (linea.endsWith("¡Ganaste!")) {
+                    victorias++;
+                } else if (linea.endsWith("Ganó la computadora")) {
+                    derrotas++;
+                } else if (linea.endsWith("¡Empate!")) {
+                    empates++;
+                }
             }
+
             numeroPartida = historial.size() + 1;
-        } catch (IOException ex) { System.err.println("No se pudo leer el historial: " + ex.getMessage()); }
+
+        } catch (IOException ex) {
+            System.err.println(
+                    "No se pudo leer el historial: "
+                    + ex.getMessage());
+        }
     }
 
     private void guardarHistorial() {
-        try { Files.write(archivo, historial, StandardCharsets.UTF_8); }
-        catch (IOException ex) { JOptionPane.showMessageDialog(ventana, "No se pudo guardar el historial: " + ex.getMessage()); }
+        try {
+            Files.write(
+                    archivo, historial, StandardCharsets.UTF_8);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(
+                    ventana,
+                    "No se pudo guardar el historial: "
+                    + ex.getMessage());
+        }
     }
 
     private static class TimerSwing {
         static void responder(int milisegundos, Runnable accion) {
-            javax.swing.Timer timer = new javax.swing.Timer(milisegundos, e -> accion.run());
-            timer.setRepeats(false); timer.start();
+            javax.swing.Timer timer =
+                    new javax.swing.Timer(
+                            milisegundos, e -> accion.run());
+
+            timer.setRepeats(false);
+            timer.start();
         }
     }
 
-    public static void main(String[] args) { SwingUtilities.invokeLater(Totito::new); }
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(Totito::new);
+    }
 }
